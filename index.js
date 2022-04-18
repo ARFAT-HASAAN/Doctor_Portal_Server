@@ -2,11 +2,14 @@ const express = require("express");
 const { MongoClient, ObjectId, ServerApiVersion } = require("mongodb");
 const cors = require("cors");
 const admin = require("firebase-admin");
+const { json } = require("express");
 const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 // firebase admin  sdk
 
+// const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+// const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
 const serviceAccount = require("./doctorPortal_Firebase_Sdk.json");
 
 // firebase admin intitialize
@@ -54,7 +57,6 @@ async function run() {
 
     app.post("/users", async (req, res) => {
       const user = req.body;
-
       const resutl = await UserCollection.insertOne(user);
       res.send(resutl);
       // console.log(resutl);
@@ -74,7 +76,6 @@ async function run() {
 
     app.get("/users/:email", async (req, res) => {
       // const email = req.params;
-
       const email = req.params?.email;
       const query = { email };
       if (!email) {
