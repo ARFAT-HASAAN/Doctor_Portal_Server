@@ -5,7 +5,7 @@ const admin = require("firebase-admin");
 const { json } = require("express");
 const app = express();
 require("dotenv").config();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 4000;
 // firebase admin  sdk
 
 // const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
