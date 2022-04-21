@@ -6,15 +6,22 @@ const { json } = require("express");
 const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 4000;
-// firebase admin  sdk
 
-// const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-// const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-const serviceAccount = require("./doctorPortal_Firebase_Sdk.json");
 
 // firebase admin intitialize
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert({
+ type  : process.env.FIREBASE_TYPE,
+ project_id : process.env.FIREBASE_PROJECT_ID,
+ private_key_id : process.env.FIREBASE_PRIVATE_KEY_ID,
+ private_key : process.env.FIREBASE_PRIVATE_KEY,
+ client_email : process.env.FIREBASE_CLIENT_EMAIL,
+ client_id : process.env.FIREBASE_CLIENT_ID,
+ auth_uri : process.env.FIREBASE_AUTH_URI,
+ token_uri : process.env.FIREBASE_TOKEN_URI,
+ auth_provider_x509_cert_url : process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+ client_x509_cert_url  : process.env.FIREBASE_CLIENT_X509_CERT_URL,
+  }),
 });
 
 app.use(cors());
@@ -115,7 +122,6 @@ async function run() {
     });
 
     app.get("/appoientment", async (req, res) => {
-      // console.log(req.query);
       const date = new Date(req.query.date).toLocaleDateString();
       const email = req.query.email;
       const query = { email: email, date: date };
