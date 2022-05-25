@@ -5,10 +5,11 @@ const admin = require("firebase-admin");
 const { json } = require("express");
 const app = express();
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 4000;
 
 
-// firebase admin intitialize
+//  FIREBASE ADMIN INTITIALIZE
 admin.initializeApp({
   credential: admin.credential.cert({
  type  : process.env.FIREBASE_TYPE,
@@ -26,6 +27,9 @@ admin.initializeApp({
 
 app.use(cors());
 app.use(express.json());
+
+
+
 
 // mongodb uri
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASS}@cluster0.oq9xl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
@@ -54,6 +58,10 @@ async function Verifitoken(req, res, next) {
   next();
 }
 
+
+// stripe secrter 
+
+
 async function run() {
   try {
     await client.connect();
@@ -61,6 +69,7 @@ async function run() {
     const database = client.db("medicalData");
     const AppoinmentCollection = database.collection("appoinmentCollection");
     const UserCollection = database.collection("UserCollection");
+    const FeedBackCollection = database.collection("FeedbackCollection");
 
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -94,7 +103,7 @@ async function run() {
         res.send(result);
       }
     });
-
+ 
     app.put("/users/admin", Verifitoken, async (req, res) => {
       const email = req.body.email;
       // console.log(req.decodedEmail);
@@ -121,6 +130,15 @@ async function run() {
       // console.log(result);
     });
 
+    app.get("/appoientment/:id", async (req, res) => {
+      const id = req?.params?.id
+      const query = { _id: ObjectId(id) }
+      const result = await AppoinmentCollection.findOne(query)
+      // console.log(result)
+      res.send(result)
+      // console.log(req.params.id)
+      // console.log("hi")
+    })
     app.get("/appoientment", async (req, res) => {
       const date = new Date(req.query.date).toLocaleDateString();
       const email = req.query.email;
@@ -128,6 +146,50 @@ async function run() {
       const result = await AppoinmentCollection.find(query).toArray();
       res.send(result);
     });
+ 
+    // appoinment update after payment
+    app.put("/appoinment/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id)
+      const query = { _id:ObjectId(id)}
+      const payment = req.body;
+      console.log(payment)
+            const doc = {
+        $set: {
+          payment: payment
+        }
+
+      }
+      const result = await AppoinmentCollection.updateOne(query, doc);
+     res.send(result)
+
+    })
+
+    app.post("/feedback", async (req, res) => {
+      const feedback = req.body;
+      const result = await FeedBackCollection.insertOne(feedback);
+      res.send(result)
+    })
+
+
+    // create payment intent 
+    app.post("/create-payment-intent", async (req, res) => {
+    const paymentInfo = req?.body
+    const ammount = (paymentInfo?.price * 100)
+    console.log(ammount, typeof(ammount))
+    
+    //  Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+    amount: ammount,
+    currency: "usd",
+    payment_method_types: ['card'],
+    
+  })
+     console.log(paymentIntent.client_secret)
+       //send client secret
+   res.send({ clientSecret: paymentIntent.client_secret,})
+       
+    })
 
     // user insert
   } finally {
